@@ -87,6 +87,9 @@ MSG_SPAM_WARN=50
 MSG_VIRUS_CRIT=30
 MSG_VIRUS_WARN=15
 
+MSG_RELAY_CRIT=1000
+MSG_RELAY_WARN=800
+
 MSG_QUEUE_CRIT=100
 MSG_QUEUE_WARN=50
 
@@ -117,6 +120,8 @@ USAGE=" Usage: $0 [options...]
     -c <int>       Spam error percentage               (default: ${MSG_SPAM_CRIT})
     -r <int>       Virus warning percentage            (default: ${MSG_VIRUS_WARN})
     -R <int>       Virus error percentage              (default: ${MSG_VIRUS_CRIT})
+    -n <int>       Number of relayed messages warning  (default: ${MSG_RELAY_WARN})
+    -N <int>       Number of relayed messages critical (default: ${MSG_RELAY_CRIT})
     -q <int>       Mail queues warning level           (default: ${MSG_QUEUE_WARN})
     -Q <int>       Mail queues error level             (default: ${MSG_QUEUE_CRIT})
     -l <int>       System load warning level           (default: ${LOAD_WARN})
@@ -129,7 +134,7 @@ USAGE=" Usage: $0 [options...]
     -D <int>       Partitions usage error percentage   (default: ${DISK_CRIT})
 "
 # Getting parameters:
-while getopts "H:C:vVhw:c:r:R:q:Q:l:L:m:M:s:S:d:D:" OPT
+while getopts "H:C:vVhw:c:r:R:q:Q:l:L:m:M:s:S:d:D:n:N:" OPT
 do
 	case $OPT in
 		"H") MC_HOST=$OPTARG;;
@@ -141,6 +146,8 @@ do
 		"c") MSG_SPAM_CRIT=$OPTARG;;
 		"r") MSG_VIRUS_WARN=$OPTARG;;
 		"R") MSG_VIRUS_CRIT=$OPTARG;;
+		"n") MSG_RELAY_WARN=$OPTARG;; 
+		"N") MSG_RELAY_CRIT=$OPTARG;; 
 		"q") MSG_QUEUE_WARN=$OPTARG;;
 		"Q") MSG_QUEUE_CRIT=$OPTARG;;
 		"l") LOAD_WARN=$OPTARG;;
@@ -177,6 +184,7 @@ then
 fi
 
 MSG_TOTAL=$(   "${SNMPWALK}" -v2c -c "${COMMUNITY}" -O qv "${MC_HOST}" 1.3.6.1.4.1.2021.8.1.101.1 | sed "s/\"//g")
+MSG_RELAY=$(   "${SNMPWALK}" -v2c -c "${COMMUNITY}" -O qv "${MC_HOST}" 1.3.6.1.4.1.36661.3.1.4.1 | sed "s/\"//g")
 MSG_SPAM=$(    "${SNMPWALK}" -v2c -c "${COMMUNITY}" -O qv "${MC_HOST}" 1.3.6.1.4.1.2021.8.1.101.2 | sed "s/\"//g")
 MSG_BYTES=$(   "${SNMPWALK}" -v2c -c "${COMMUNITY}" -O qv "${MC_HOST}" 1.3.6.1.4.1.2021.8.1.101.3 | sed "s/\"//g")
 MSG_VIRUS=$(   "${SNMPWALK}" -v2c -c "${COMMUNITY}" -O qv "${MC_HOST}" 1.3.6.1.4.1.2021.8.1.101.4 | sed "s/\"//g")
@@ -191,7 +199,7 @@ MEM_STATUS=$(  "${SNMPWALK}" -v2c -c "${COMMUNITY}" -O qv "${MC_HOST}" 1.3.6.1.4
 
 
 # Process some stats
-STATS="${STATS} msg_tot=${MSG_TOTAL} msg_spam=${MSG_SPAM} msg_virus=${MSG_VIRUS}"
+STATS="${STATS} msg_tot=${MSG_TOTAL} msg_spam=${MSG_SPAM} msg_virus=${MSG_VIRUS} msg_relay=${MSG_RELAY}"
 
 ### Process data
 
@@ -387,6 +395,17 @@ else
 	ISSUEOK="${ISSUEOK}${MSG}\\n"
 fi
 
+MSG="Relay count: ${MSG_RELAY}"
+if [ "${MSG_RELAY}" -ge "$MSG_RELAY_CRIT" ]
+then
+	ISSUECRIT="${ISSUECRIT}${MSG}${SEPARATOR}"
+elif [ "${MSG_RELAY}" -ge "$MSG_RELAY_WARN" ]
+then
+	ISSUEWARN="${ISSUEWARN}${MSG}${SEPARATOR}"
+else
+	ISSUEOK="${ISSUEOK}${MSG}\\n"
+fi
+
 
 
 
@@ -421,15 +440,16 @@ if [ "${VERBOSE}" -ge "2" ]
 then
 	echo "Raw SNMP values:
  1. number of filtered messages = ${MSG_TOTAL}
- 2. number of spams detected = ${MSG_SPAM}
- 3. number of bytes filtered = ${MSG_BYTES}
- 4. number of viruses detected = ${MSG_VIRUS}
- 5. processes status = ${PROCS_STATUS//\|/#}
- 6. spools status (messages in incoming#filtering#outgoing queues) = ${SPOOL_STATUS//\|/#}
- 7. system load (last 5#10#15minutes) = ${LOAD_STATUS//\|/#}
- 8. disk partitions usage = ${PART_STATUS//\|/#}
- 9. system memory usage in kB (tot_ram#free_ram#tot_swap#free_swap) = ${MEM_STATUS//\|/#}
-10. all daily counts (bytes#msg#spam#%spam#virus#%virus#content#%content#clean#%clean) = ${DAILY_COUNTS//\|/#}"
+ 2. number of relayed messages = ${MSG_RELAY}
+ 3. number of spams detected = ${MSG_SPAM}
+ 4. number of bytes filtered = ${MSG_BYTES}
+ 5. number of viruses detected = ${MSG_VIRUS}
+ 6. processes status = ${PROCS_STATUS//\|/#}
+ 7. spools status (messages in incoming#filtering#outgoing queues) = ${SPOOL_STATUS//\|/#}
+ 8. system load (last 5#10#15minutes) = ${LOAD_STATUS//\|/#}
+ 9. disk partitions usage = ${PART_STATUS//\|/#}
+10. system memory usage in kB (tot_ram#free_ram#tot_swap#free_swap) = ${MEM_STATUS//\|/#}
+11. all daily counts (bytes#msg#spam#%spam#virus#%virus#content#%content#clean#%clean) = ${DAILY_COUNTS//\|/#}"
 
 fi
 
