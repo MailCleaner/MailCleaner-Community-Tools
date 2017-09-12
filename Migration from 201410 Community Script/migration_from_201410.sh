@@ -84,16 +84,6 @@ fi
 echo "Start dumping.."
 tbls_to_import="domain domain_pref user user_pref email administrator wwlists"
 
-#while true; do
-#    read -p "Do you wish to import white/warn/black lists [y]: " yn
-#    case $yn in
-#        [Yy]* ) tbls_to_import=$tbls_to_import"wwlists"; break;;
-#        [Nn]* ) break;;
-#        * ) echo -n "Please answer yes or no.";;
-#    esac
-#
-#done
-
 echo $tbls_to_import &>> $LOGFILE
 
 DATE=`date '+%d-%m-%Y'`;
