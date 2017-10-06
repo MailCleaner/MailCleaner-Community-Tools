@@ -82,7 +82,7 @@ fi
 # Import wwlists
 
 echo "Start dumping.."
-tbls_to_import="domain domain_pref user user_pref email administrator wwlists"
+tbls_to_import="domain domain_pref user user_pref email administrator wwlists mysql_auth"
 
 echo $tbls_to_import &>> $LOGFILE
 
