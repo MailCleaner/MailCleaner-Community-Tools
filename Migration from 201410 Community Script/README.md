@@ -13,4 +13,4 @@ The mysql tables concerned are:
 * email 
 * administrator 
 * wwlists
-
+* mysql_auth
