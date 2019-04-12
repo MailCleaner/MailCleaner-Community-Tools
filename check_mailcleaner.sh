@@ -11,7 +11,7 @@
 #
 
 : <<'SNMP-DOCUMENTATION'
-Source: http://www.mailcleaner.org/doku.php/documentation:snmp_monitoring
+Source: https://www.mailcleaner.org/knowledge-base/monitor-mailcleaner-snmp/
 
 
 Here are the few more traps provided by MailCleaner:
