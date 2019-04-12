@@ -2,13 +2,13 @@
 #set -x
 
 # Checks the MailCleaner overall status using SNMP values.
-# 
+#
 # NB: don't forget to allow the monitoring poller IP in the MailCleaner configuration
 #     ( Configuration => Services => SNMP monitoring )
-# 
-# 
+#
+#
 # by fabricat
-# 
+#
 
 : <<'SNMP-DOCUMENTATION'
 Source: http://www.mailcleaner.org/doku.php/documentation:snmp_monitoring
@@ -110,9 +110,9 @@ USAGE=" Usage: $0 [options...]
  Options:
     -H <string>    MailCleaner host or IP              (default: ${MC_HOST})
     -C <string>    SNMP read community                 (default: ${COMMUNITY})
-    -v             Verbose output                      
-    -V             Very verbose output                 
-    -h             Print this help and exit            
+    -v             Verbose output
+    -V             Very verbose output
+    -h             Print this help and exit
     -w <int>       Spam warning percentage             (default: ${MSG_SPAM_WARN})
     -c <int>       Spam error percentage               (default: ${MSG_SPAM_CRIT})
     -r <int>       Virus warning percentage            (default: ${MSG_VIRUS_WARN})
@@ -151,6 +151,7 @@ do
 		"S") SWAP_CRIT=$OPTARG;;
 		"d") DISK_WARN=$OPTARG;;
 		"D") DISK_CRIT=$OPTARG;;
+        *) echo "$USAGE" && exit 3;;
 	esac
 done
 
@@ -159,7 +160,6 @@ done
 STATE_OK=0
 STATE_WARNING=1
 STATE_CRITICAL=2
-STATE_UNKNOWN=3
 
 ISSUECRIT=""
 ISSUEWARN=""
@@ -168,29 +168,25 @@ STATS=""
 
 SEPARATOR=" - "
 
-
-
-
-
 # Get data from SNMP queries
-DAILY_COUNTS=$(${SNMPWALK} -v2c -c ${COMMUNITY} -O qv ${MC_HOST} 1.3.6.1.4.1.2021.8.1.101.10 2>&1)
+DAILY_COUNTS=$("${SNMPWALK}" -v2c -c "${COMMUNITY}" -O qv "${MC_HOST}" 1.3.6.1.4.1.2021.8.1.101.10 | sed "s/\"//g" 2>&1)
 if [ $? -ne 0 ]
 then
 	echo "CRITICAL: $DAILY_COUNTS"
 	exit $STATE_CRITICAL
 fi
 
-MSG_TOTAL=$(   ${SNMPWALK} -v2c -c ${COMMUNITY} -O qv ${MC_HOST} 1.3.6.1.4.1.2021.8.1.101.1)
-MSG_SPAM=$(    ${SNMPWALK} -v2c -c ${COMMUNITY} -O qv ${MC_HOST} 1.3.6.1.4.1.2021.8.1.101.2)
-MSG_BYTES=$(   ${SNMPWALK} -v2c -c ${COMMUNITY} -O qv ${MC_HOST} 1.3.6.1.4.1.2021.8.1.101.3)
-MSG_VIRUS=$(   ${SNMPWALK} -v2c -c ${COMMUNITY} -O qv ${MC_HOST} 1.3.6.1.4.1.2021.8.1.101.4)
+MSG_TOTAL=$(   "${SNMPWALK}" -v2c -c "${COMMUNITY}" -O qv "${MC_HOST}" 1.3.6.1.4.1.2021.8.1.101.1 | sed "s/\"//g")
+MSG_SPAM=$(    "${SNMPWALK}" -v2c -c "${COMMUNITY}" -O qv "${MC_HOST}" 1.3.6.1.4.1.2021.8.1.101.2 | sed "s/\"//g")
+MSG_BYTES=$(   "${SNMPWALK}" -v2c -c "${COMMUNITY}" -O qv "${MC_HOST}" 1.3.6.1.4.1.2021.8.1.101.3 | sed "s/\"//g")
+MSG_VIRUS=$(   "${SNMPWALK}" -v2c -c "${COMMUNITY}" -O qv "${MC_HOST}" 1.3.6.1.4.1.2021.8.1.101.4 | sed "s/\"//g")
 
-PROCS_STATUS=$(${SNMPWALK} -v2c -c ${COMMUNITY} -O qv ${MC_HOST} 1.3.6.1.4.1.2021.8.1.101.5)
-SPOOL_STATUS=$(${SNMPWALK} -v2c -c ${COMMUNITY} -O qv ${MC_HOST} 1.3.6.1.4.1.2021.8.1.101.6)
+PROCS_STATUS=$("${SNMPWALK}" -v2c -c "${COMMUNITY}" -O qv "${MC_HOST}" 1.3.6.1.4.1.2021.8.1.101.5 | sed "s/\"//g")
+SPOOL_STATUS=$("${SNMPWALK}" -v2c -c "${COMMUNITY}" -O qv "${MC_HOST}" 1.3.6.1.4.1.2021.8.1.101.6 | sed "s/\"//g")
 
-LOAD_STATUS=$( ${SNMPWALK} -v2c -c ${COMMUNITY} -O qv ${MC_HOST} 1.3.6.1.4.1.2021.8.1.101.7)
-PART_STATUS=$( ${SNMPWALK} -v2c -c ${COMMUNITY} -O qv ${MC_HOST} 1.3.6.1.4.1.2021.8.1.101.8)
-MEM_STATUS=$(  ${SNMPWALK} -v2c -c ${COMMUNITY} -O qv ${MC_HOST} 1.3.6.1.4.1.2021.8.1.101.9)
+LOAD_STATUS=$( "${SNMPWALK}" -v2c -c "${COMMUNITY}" -O qv "${MC_HOST}" 1.3.6.1.4.1.2021.8.1.101.7 | sed "s/\"//g")
+PART_STATUS=$( "${SNMPWALK}" -v2c -c "${COMMUNITY}" -O qv "${MC_HOST}" 1.3.6.1.4.1.2021.8.1.101.8 | sed "s/\"//g")
+MEM_STATUS=$(  "${SNMPWALK}" -v2c -c "${COMMUNITY}" -O qv "${MC_HOST}" 1.3.6.1.4.1.2021.8.1.101.9 | sed "s/\"//g")
 
 
 
@@ -200,119 +196,119 @@ STATS="${STATS} msg_tot=${MSG_TOTAL} msg_spam=${MSG_SPAM} msg_virus=${MSG_VIRUS}
 ### Process data
 
 # Queue status
-incoming=$(echo ${SPOOL_STATUS} | cut -d'|' -f 2)
-filtered=$(echo ${SPOOL_STATUS} | cut -d'|' -f 3)
-outgoing=$(echo ${SPOOL_STATUS} | cut -d'|' -f 4)
+incoming=$(echo "${SPOOL_STATUS}" | cut -d'|' -f 2)
+filtered=$(echo "${SPOOL_STATUS}" | cut -d'|' -f 3)
+outgoing=$(echo "${SPOOL_STATUS}" | cut -d'|' -f 4)
 STATS="${STATS} queue_in=${incoming} queue_filter=${filtered} queue_out=${outgoing}"
 
 MSG="Queue count: $incoming incoming, $filtered filtered, $outgoing outgoing"
-if [ $incoming -ge $MSG_QUEUE_CRIT -o $filtered -ge $MSG_QUEUE_CRIT -o $outgoing -ge $MSG_QUEUE_CRIT ]
+if [ "$incoming" -ge "$MSG_QUEUE_CRIT" ] || [ "$filtered" -ge "$MSG_QUEUE_CRIT" ] || [ "$outgoing" -ge "$MSG_QUEUE_CRIT" ]
 then
 	ISSUECRIT="${ISSUECRIT}${MSG}${SEPARATOR}"
-elif [ $incoming -ge $MSG_QUEUE_WARN -o $filtered -ge $MSG_QUEUE_WARN -o $outgoing -ge $MSG_QUEUE_WARN ]
+elif [ "$incoming" -ge "$MSG_QUEUE_WARN" ] || [ "$filtered" -ge "$MSG_QUEUE_WARN" ] || [ "$outgoing" -ge "$MSG_QUEUE_WARN" ]
 then
 	ISSUEWARN="${ISSUEWARN}${MSG}${SEPARATOR}"
 else
-	ISSUEOK="${ISSUEOK}${MSG}\n"
+	ISSUEOK="${ISSUEOK}${MSG}\\n"
 fi
 
 
 # Procs status
-mta_in=$(     echo ${PROCS_STATUS} | cut -d'|' -f 2)
-mta_queue=$(  echo ${PROCS_STATUS} | cut -d'|' -f 3)
-mta_out=$(    echo ${PROCS_STATUS} | cut -d'|' -f 4)
-web_gui=$(    echo ${PROCS_STATUS} | cut -d'|' -f 5)
-filt_engine=$(echo ${PROCS_STATUS} | cut -d'|' -f 6)
-master_db=$(  echo ${PROCS_STATUS} | cut -d'|' -f 7)
-slave_db=$(   echo ${PROCS_STATUS} | cut -d'|' -f 8)
-firewall=$(   echo ${PROCS_STATUS} | cut -d'|' -f 9)
+mta_in=$(     echo "${PROCS_STATUS}" | cut -d'|' -f 2)
+mta_queue=$(  echo "${PROCS_STATUS}" | cut -d'|' -f 3)
+mta_out=$(    echo "${PROCS_STATUS}" | cut -d'|' -f 4)
+web_gui=$(    echo "${PROCS_STATUS}" | cut -d'|' -f 5)
+filt_engine=$(echo "${PROCS_STATUS}" | cut -d'|' -f 6)
+master_db=$(  echo "${PROCS_STATUS}" | cut -d'|' -f 7)
+slave_db=$(   echo "${PROCS_STATUS}" | cut -d'|' -f 8)
+firewall=$(   echo "${PROCS_STATUS}" | cut -d'|' -f 9)
 
 if [ "$mta_in" == "1" ]
 then
-	ISSUEOK="${ISSUEOK}Incoming MTA: running\n"
+	ISSUEOK="${ISSUEOK}Incoming MTA: running\\n"
 else
 	ISSUECRIT="${ISSUECRIT}Incoming MTA down${SEPARATOR}"
 fi
 
 if [ "$mta_queue" == "1" ]
 then
-	ISSUEOK="${ISSUEOK}Queuing MTA: running\n"
+	ISSUEOK="${ISSUEOK}Queuing MTA: running\\n"
 else
 	ISSUECRIT="${ISSUECRIT}Queuing MTA down${SEPARATOR}"
 fi
 
 if [ "$mta_out" == "1" ]
 then
-	ISSUEOK="${ISSUEOK}Outgoing MTA: running\n"
+	ISSUEOK="${ISSUEOK}Outgoing MTA: running\\n"
 else
 	ISSUECRIT="${ISSUECRIT}Outgoing MTA down${SEPARATOR}"
 fi
 
 if [ "$web_gui" == "1" ]
 then
-	ISSUEOK="${ISSUEOK}Web GUI: running\n"
+	ISSUEOK="${ISSUEOK}Web GUI: running\\n"
 else
 	ISSUEWARN="${ISSUEWARN}Web GUI down${SEPARATOR}"
 fi
 
 if [ "$filt_engine" == "1" ]
 then
-	ISSUEOK="${ISSUEOK}Antispam/antivirus process/filtering engine: running\n"
+	ISSUEOK="${ISSUEOK}Antispam/antivirus process/filtering engine: running\\n"
 else
 	ISSUECRIT="${ISSUECRIT}Antispam/antivirus process/filtering engine down${SEPARATOR}"
 fi
 
 if [ "$master_db" == "1" ]
 then
-	ISSUEOK="${ISSUEOK}Master DB: running\n"
+	ISSUEOK="${ISSUEOK}Master DB: running\\n"
 else
 	ISSUEWARN="${ISSUEWARN}Master DB down${SEPARATOR}"
 fi
 
 if [ "$slave_db" == "1" ]
 then
-	ISSUEOK="${ISSUEOK}Slave DB: running\n"
+	ISSUEOK="${ISSUEOK}Slave DB: running\\n"
 else
 	ISSUECRIT="${ISSUECRIT}Slave DB down${SEPARATOR}"
 fi
 
 if [ "$firewall" == "1" ]
 then
-	ISSUEOK="${ISSUEOK}Firewall: running\n"
+	ISSUEOK="${ISSUEOK}Firewall: running\\n"
 else
 	ISSUEWARN="${ISSUEWARN}Firewall down${SEPARATOR}"
 fi
 
 
 # Load status
-load05=$(echo ${LOAD_STATUS} | cut -d'|' -f 2)
-load10=$(echo ${LOAD_STATUS} | cut -d'|' -f 3)
-load15=$(echo ${LOAD_STATUS} | cut -d'|' -f 4)
+load05=$(echo "${LOAD_STATUS}" | cut -d'|' -f 2)
+load10=$(echo "${LOAD_STATUS}" | cut -d'|' -f 3)
+load15=$(echo "${LOAD_STATUS}" | cut -d'|' -f 4)
 STATS="${STATS} load5=${load05} load10=${load10} load15=${load15}"
 
 MSG="System load: $load05/$load10/$load15"
 load05=${load05/.*}
 load10=${load10/.*}
 load15=${load15/.*}
-if [ "$load05" -ge "$LOAD_CRIT" -o "$load10" -ge "$LOAD_CRIT" -o "$load15" -ge "$LOAD_CRIT" ]
+if [ "$load05" -ge "$LOAD_CRIT" ] || [ "$load10" -ge "$LOAD_CRIT" ] || [ "$load15" -ge "$LOAD_CRIT" ]
 then
 	ISSUECRIT="${ISSUECRIT}${MSG}${SEPARATOR}"
-elif [ "$load05" -ge "$LOAD_WARN" -o "$load10" -ge "$LOAD_WARN" -o "$load15" -ge "$LOAD_WARN" ]
+elif [ "$load05" -ge "$LOAD_WARN" ] || [ "$load10" -ge "$LOAD_WARN" ] || [ "$load15" -ge "$LOAD_WARN" ]
 then
 	ISSUEWARN="${ISSUEWARN}${MSG}${SEPARATOR}"
 else
-	ISSUEOK="${ISSUEOK}${MSG}\n"
+	ISSUEOK="${ISSUEOK}${MSG}\\n"
 fi
 
 
 # Memory status
-ram_tot=$(  echo ${MEM_STATUS} | cut -d'|' -f 2)
-ram_free=$( echo ${MEM_STATUS} | cut -d'|' -f 3)
-swap_tot=$( echo ${MEM_STATUS} | cut -d'|' -f 4)
-swap_free=$(echo ${MEM_STATUS} | cut -d'|' -f 5)
+ram_tot=$(  echo "${MEM_STATUS}" | cut -d'|' -f 2)
+ram_free=$( echo "${MEM_STATUS}" | cut -d'|' -f 3)
+swap_tot=$( echo "${MEM_STATUS}" | cut -d'|' -f 4)
+swap_free=$(echo "${MEM_STATUS}" | cut -d'|' -f 5)
 
-ram_perc=$(expr  100 - \( $ram_free  \* 100 / $ram_tot  \) )
-swap_perc=$(expr 100 - \( $swap_free \* 100 / $swap_tot \) )
+ram_perc=$(( 100 - ( ram_free  * 100 / ram_tot  ) ))
+swap_perc=$(( 100 - ( swap_free * 100 / swap_tot ) ))
 STATS="${STATS} ram=${ram_perc}% swap=${swap_perc}%"
 
 MSG="Memory load: ${ram_perc}%"
@@ -323,7 +319,7 @@ elif [ "$ram_perc" -ge "$MEM_WARN" ]
 then
 	ISSUEWARN="${ISSUEWARN}${MSG}${SEPARATOR}"
 else
-	ISSUEOK="${ISSUEOK}${MSG}\n"
+	ISSUEOK="${ISSUEOK}${MSG}\\n"
 fi
 
 MSG="Swap load: ${swap_perc}%"
@@ -334,17 +330,17 @@ elif [ "$swap_perc" -ge "$SWAP_WARN" ]
 then
 	ISSUEWARN="${ISSUEWARN}${MSG}${SEPARATOR}"
 else
-	ISSUEOK="${ISSUEOK}${MSG}\n"
+	ISSUEOK="${ISSUEOK}${MSG}\\n"
 fi
 
 
 # Disk partitions status
 i="2"
-part_name=$(echo ${PART_STATUS} | cut -d'|' -f $i)
+part_name=$(echo "${PART_STATUS}" | cut -d'|' -f $i)
 while [ "$part_name" != "" ]
 do
-	i=$(( $i + 1 ))
-	part_perc=$(echo ${PART_STATUS} | cut -d'|' -f $i)
+	i=$(( i + 1 ))
+	part_perc=$(echo "${PART_STATUS}" | cut -d'|' -f $i)
 	STATS="${STATS} ${part_name}=${part_perc}"
 
 	MSG="Disk ${part_name}: ${part_perc}"
@@ -355,18 +351,18 @@ do
 	then
 		ISSUEWARN="${ISSUEWARN}${MSG}${SEPARATOR}"
 	else
-		ISSUEOK="${ISSUEOK}${MSG}\n"
+		ISSUEOK="${ISSUEOK}${MSG}\\n"
 	fi
 
-	i=$(( $i + 1 ))
-	part_name=$(echo ${PART_STATUS} | cut -d'|' -f $i)
+	i=$(( i + 1 ))
+	part_name=$(echo "${PART_STATUS}" | cut -d'|' -f $i)
 done
 
 
 # Spam / malicious percentage status
-spam_perc=$( echo ${DAILY_COUNTS} | cut -d'|' -f 4)
-virus_perc=$(echo ${DAILY_COUNTS} | cut -d'|' -f 6)
-clean_perc=$(echo ${DAILY_COUNTS} | cut -d'|' -f 10)
+spam_perc=$( echo "${DAILY_COUNTS}" | cut -d'|' -f 4)
+virus_perc=$(echo "${DAILY_COUNTS}" | cut -d'|' -f 6)
+clean_perc=$(echo "${DAILY_COUNTS}" | cut -d'|' -f 10)
 STATS="${STATS} spam=${spam_perc}% virus=${virus_perc}% clean=${clean_perc}%"
 
 MSG="Spam load: ${spam_perc}"
@@ -377,7 +373,7 @@ elif [ "${spam_perc/.*}" -ge "$MSG_SPAM_WARN" ]
 then
 	ISSUEWARN="${ISSUEWARN}${MSG}${SEPARATOR}"
 else
-	ISSUEOK="${ISSUEOK}${MSG}\n"
+	ISSUEOK="${ISSUEOK}${MSG}\\n"
 fi
 
 MSG="Virus load: ${virus_perc}"
@@ -388,7 +384,7 @@ elif [ "${virus_perc/.*}" -ge "$MSG_VIRUS_WARN" ]
 then
 	ISSUEWARN="${ISSUEWARN}${MSG}${SEPARATOR}"
 else
-	ISSUEOK="${ISSUEOK}${MSG}\n"
+	ISSUEOK="${ISSUEOK}${MSG}\\n"
 fi
 
 
@@ -416,9 +412,9 @@ fi
 
 echo " |$STATS"
 
-if [ -n "$ISSUEOK" -a "${VERBOSE}" -ge "1" ]
+if [ -n "$ISSUEOK" ] && [ "${VERBOSE}" -ge "1" ]
 then
-	echo -e "\n$ISSUEOK"
+	echo -e "\\n$ISSUEOK"
 fi
 
 if [ "${VERBOSE}" -ge "2" ]
